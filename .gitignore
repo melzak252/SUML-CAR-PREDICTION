@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Local data and generated artifacts
+outputs/
+models/*
+!models/car_price_xgboost_price_target/
+models/car_price_xgboost_price_target/*
+!models/car_price_xgboost_price_target/model_pipeline_app.pkl
+!models/car_price_xgboost_price_target/input_schema.json
+data/
+test/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
