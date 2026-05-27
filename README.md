@@ -34,11 +34,28 @@ Uruchom aplikację:
 .venv\Scripts\streamlit.exe run app\streamlit_app.py
 ```
 
+## Pipeline modelu
+
+Kod pokazujący skąd bierze się model jest w:
+
+```text
+training/train_app_model.py
+```
+
+Pipeline czyści dane, trenuje model XGBoost, zapisuje model, schema i lookup marek/modeli.
+
+Żeby odtworzyć model, potrzebny jest plik danych w `data/Car_sale_ads.csv`, a potem można uruchomić:
+
+```powershell
+.venv\Scripts\python.exe training\train_app_model.py
+```
+
 ## Struktura
 
 ```text
 app/          # kod aplikacji Streamlit
 models/       # zapisany model i schema
+training/     # pipeline treningowy modelu
 requirements.txt
 .env.example
 ```
