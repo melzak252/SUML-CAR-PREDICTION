@@ -25,7 +25,7 @@ if errorlevel 1 (
 )
 
 echo Pobieranie datasetu...
-python ./backend/download_dataset.py
+python ./tools/download_dataset.py
 if errorlevel 1 (
     echo UWAGA: Nie udalo sie pobrac datasetu.
 ) else (
