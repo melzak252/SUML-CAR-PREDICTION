@@ -1,29 +1,35 @@
-import subprocess
 import sys
 import webbrowser
 import time
 from pathlib import Path
 from multiprocessing import Process
-
+from tools.generate_car_options import generate_options as generate_car_options
 
 ROOT = Path(__file__).resolve().parent
+FRONTEND_DIR = ROOT / "frontend"
 
 
 def run_api():
     import uvicorn
+
     uvicorn.run("backend.api.main:app", host="0.0.0.0", port=8000)
 
 
 def run_middleware():
     import uvicorn
+
     uvicorn.run("backend.middleware.main:app", host="0.0.0.0", port=8001)
 
 
 def generate_options():
-    options_path = ROOT / "frontend" / "car_options.json"
+    options_path = FRONTEND_DIR / "car_options.json"
+    print(f"Sprawdzanie {options_path}...")
     if not options_path.exists():
         print("Generowanie car_options.json...")
-        subprocess.run([sys.executable, str(ROOT / "tools" / "generate_options.py")], check=True)
+        generate_car_options(
+            data_dir=ROOT / "data",
+            output_dir=FRONTEND_DIR / "data",
+        )
     else:
         print("car_options.json juz istnieje, pomijam generowanie.")
 
