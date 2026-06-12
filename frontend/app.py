@@ -17,12 +17,29 @@ with open(DATA_DIR / "drives_by_model.json", encoding="utf-8") as f:
     drives_by_model = json.load(f)
 with open(DATA_DIR / "colours.json", encoding="utf-8") as f:
     colours = json.load(f)
+with open(DATA_DIR / "types_pl.json", encoding="utf-8") as f:
+    types_pl = json.load(f)
+    types_pl_rev = {v: k for k, v in types_pl.items()}
+with open(DATA_DIR / "drives_pl.json", encoding="utf-8") as f:
+    drives_pl = json.load(f)
+    drives_pl_rev = {v: k for k, v in drives_pl.items()}
+with open(DATA_DIR / "colours_pl.json", encoding="utf-8") as f:
+    kolory_pl = json.load(f)
+    kolory_pl_rev = {v: k for k, v in kolory_pl.items()}
 
 API_URL = "http://127.0.0.1:8000/predict"
 FUEL_TYPES = ["Diesel", "Gasoline", "Gasoline + LPG"]
+FUEL_TYPES_PL = {
+    "Diesel": "Diesel",
+    "Benzyna": "Gasoline",
+    "Benzyna + LPG": "Gasoline + LPG",
+}
 TRANSMISSIONS = ["Manual", "Automatic"]
+TRANSMISSIONS_PL = {"Manualna": "Manual", "Automatyczna": "Automatic"}
 YEARS = list(range(1990, 2027))
 PH = "---"
+
+slownik = {}
 
 
 def reset_downstream(from_key):
@@ -36,6 +53,7 @@ def reset_downstream(from_key):
 
 
 def make_selectbox(label, options, key, disabled=False):
+    options = list(options)
     if disabled:
         st.selectbox(label, [PH], disabled=True, key=key)
         return PH
@@ -48,7 +66,8 @@ def make_selectbox(label, options, key, disabled=False):
 
 
 st.set_page_config(page_title="RevRate", page_icon="🚗")
-st.title("OTOCENAZATOMOTO")
+st.title("RevRate")
+st.subheader("Inteligentna wycena samochodów")
 
 r1c1, r1c2, r1c3 = st.columns(3)
 
@@ -59,7 +78,7 @@ with r1c1:
 r1c1, r1c2, r1c3 = st.columns(3)
 
 with r1c1:
-    manufacturer = make_selectbox("Manufacturer", brands, "manufacturer")
+    manufacturer = make_selectbox("Marka", brands, "manufacturer")
     if (
         st.session_state.get("_prev_man") is not None
         and manufacturer != st.session_state["_prev_man"]
@@ -84,35 +103,62 @@ with r1c2:
         st.rerun()
     st.session_state["_prev_mod"] = model
 
+
+def render_prediction(
+    predicted_price: float, lower_bound: float, upper_bound: float
+) -> None:
+    price = f"{predicted_price:,.0f} PLN".replace(",", " ")
+    low = f"{lower_bound:,.0f} PLN".replace(",", " ")
+    high = f"{upper_bound:,.0f} PLN".replace(",", " ")
+
+    with st.container(border=True):
+        st.markdown("### Aktualna wycena")
+        main_col, low_col, high_col = st.columns([1, 1, 1])
+        main_col.metric("Szacowana cena", price)
+        low_col.metric("Dolny zakres", low)
+        high_col.metric("Górny zakres", high)
+        st.caption(
+            "Zakres jest orientacyjny i pokazuje około ±15% od predykcji modelu."
+        )
+
+
 mod_selected = model != PH
 types_list = types_by_model.get(model, []) if mod_selected else []
+types_list_pl = [types_pl_rev[t] for t in types_list] if mod_selected else []
 drives_list = drives_by_model.get(model, []) if mod_selected else []
-
+drives_list_pl = [drives_pl_rev[d] for d in drives_list] if mod_selected else []
 with r1c3:
-    type_val = make_selectbox("Type", types_list, "type", disabled=not mod_selected)
+    type_pl_val = make_selectbox(
+        "Typ nadwozia", types_list_pl, "type", disabled=not mod_selected
+    )
+    type_val = types_pl.get(type_pl_val, PH) if type_pl_val != PH else PH
+
 
 r2c1, r2c2, r2c3 = st.columns(3)
 
 with r2c1:
-    drive = make_selectbox("Drive", drives_list, "drive", disabled=not mod_selected)
+    drive_pl = make_selectbox(
+        "Napęd", drives_list_pl, "drive", disabled=not mod_selected
+    )
+    drive = drives_pl.get(drive_pl, PH) if drive_pl != PH else PH
 
 with r2c2:
-    production_year = make_selectbox("Production year", YEARS, "year")
+    production_year = make_selectbox("Rok produkcji", YEARS, "year")
 
 with r2c3:
     mileage = st.number_input(
-        "Mileage (in kkm)",
+        "Przebieg (w tys. km)",
         min_value=None,
         step=1,
         format="%d",
-        placeholder="Enter mileage",
+        placeholder="Wprowadź przebieg w tysiącach km (np. 150)",
     )
 
 r3c1, r3c2, r3c3 = st.columns(3)
 
 with r3c1:
     power = st.number_input(
-        "Power (in hp)",
+        "Moc (w KM)",
         min_value=1,
         max_value=2000,
         value=150,
@@ -122,7 +168,7 @@ with r3c1:
 
 with r3c2:
     displacement = st.number_input(
-        "Displacement (in cm³)",
+        "Pojemność (w cm³)",
         min_value=1,
         max_value=9999,
         value=2000,
@@ -131,16 +177,22 @@ with r3c2:
     )
 
 with r3c3:
-    fuel_type = make_selectbox("Fuel type", FUEL_TYPES, "fuel")
+    fuel_type_pl = make_selectbox("Typ paliwa", FUEL_TYPES_PL.keys(), "fuel")
+    fuel_type = FUEL_TYPES_PL.get(fuel_type_pl, PH) if fuel_type_pl != PH else PH
 
 r4c1, r4c2, r4c3 = st.columns(3)
 
 with r4c1:
-    transmission = make_selectbox("Transmission", TRANSMISSIONS, "transmission")
+    transmission_pl = make_selectbox(
+        "Transmission", TRANSMISSIONS_PL.keys(), "transmission"
+    )
+    transmission = (
+        TRANSMISSIONS_PL.get(transmission_pl, PH) if transmission_pl != PH else PH
+    )
 
 with r4c2:
     doors_number = st.number_input(
-        "Doors number",
+        "Liczba drzwi",
         min_value=1,
         max_value=10,
         value=5,
@@ -148,8 +200,10 @@ with r4c2:
         format="%d",
     )
 
+colours = kolory_pl.keys() if model != PH else colours
 with r4c3:
-    colour = make_selectbox("Colour", colours, "colour")
+    colour_pl = make_selectbox("Kolor", colours, "colour")
+    colour = kolory_pl.get(colour_pl, PH) if colour_pl != PH else PH
 
 all_filled = all(
     [
@@ -198,19 +252,28 @@ payload = {
 }
 
 btn_col1, btn_col2, btn_col3 = st.columns([2, 1, 1])
+price = st.session_state.get("predicted_price")
 with btn_col3:
-    if st.button("Calculate price", disabled=not all_filled, type="primary"):
+    if st.button("Oblicz cenę", disabled=not all_filled, type="primary"):
         try:
             resp = requests.post(API_URL, json=payload, timeout=30)
             resp.raise_for_status()
             result = resp.json()
-            st.success(f"Predicted price: **{result['predicted_price']:,.2f} PLN**")
+            price = result["predicted_price"]
+
+            st.session_state["predicted_price"] = price
         except requests.exceptions.ConnectionError:
             st.error(
-                "Cannot connect to API. Make sure the backend is running on http://127.0.0.1:8000"
+                "Nie można połączyć się z API. Upewnij się, że backend działa na http://127.0.0.1:8000"
             )
         except Exception as e:
             st.error(f"Error: {e}")
 
-with st.expander("Aktualne dane auta"):
-    st.json(payload)
+if price is not None:
+    lower = price * 0.85
+    upper = price * 1.15
+    render_prediction(
+        predicted_price=price,
+        lower_bound=lower,
+        upper_bound=upper,
+    )
