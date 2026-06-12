@@ -11,3 +11,4 @@ pydantic
 fastapi
 uvicorn
 autogluon
+streamlit
