@@ -30,7 +30,7 @@ def generate_options():
 
 def check_models():
     models_dir = ROOT / "models"
-    required = ["custom_model.pkl", "custom_preprocessor.pkl", "custom_top_features.pkl"]
+    required = ["custom_model.pkl"]
     missing = [f for f in required if not (models_dir / f).exists()]
     if missing:
         print(f"Blad: Brak plikow modelu w {models_dir}:")

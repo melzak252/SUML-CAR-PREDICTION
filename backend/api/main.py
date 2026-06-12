@@ -1,17 +1,35 @@
 import joblib
 import pandas as pd
+import warnings
+from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 
+warnings.filterwarnings("ignore", category=UserWarning, module="xgboost")
+
 MODELS_DIR = Path(__file__).resolve().parent.parent.parent / "models"
 
-app = FastAPI(title="Car Price Prediction API")
-
 model = None
-preprocessor = None
-feature_names = None
+categorical_cols = None
+feature_order = None
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global model, categorical_cols, feature_order
+    model = joblib.load(MODELS_DIR / "custom_model.pkl")
+    booster = model.get_booster()
+    feature_order = booster.feature_names
+    categorical_cols = [
+        name for name, ftype in zip(booster.feature_names, booster.feature_types)
+        if ftype == "c"
+    ]
+    yield
+
+
+app = FastAPI(title="Car Price Prediction API", lifespan=lifespan)
 
 
 class PredictionRequest(BaseModel):
@@ -30,6 +48,7 @@ class PredictionRequest(BaseModel):
     car_age: Optional[float] = None
     mileage_per_year: Optional[float] = None
     power_to_displacement: Optional[float] = None
+    age_x_mileage: Optional[float] = None
 
 
 class PredictionResponse(BaseModel):
@@ -37,34 +56,22 @@ class PredictionResponse(BaseModel):
     currency: str = "PLN"
 
 
-@app.on_event("startup")
-def load_models():
-    global model, preprocessor, feature_names
-    model = joblib.load(MODELS_DIR / "custom_model.pkl")
-    preprocessor = joblib.load(MODELS_DIR / "custom_preprocessor.pkl")
-    feature_names = joblib.load(MODELS_DIR / "custom_top_features.pkl")
-
-
 @app.post("/predict", response_model=PredictionResponse)
 def predict(request: PredictionRequest):
-    if request.Condition is None:
-        raise HTTPException(status_code=400, detail="Condition is required")
-
     row = {}
-    for name in feature_names:
-        val = getattr(request, name, None)
+    for field in request.model_fields:
+        val = getattr(request, field)
         if val is None:
-            raise HTTPException(status_code=400, detail=f"Missing feature: {name}")
-        row[name] = val
+            raise HTTPException(status_code=400, detail=f"Missing feature: {field}")
+        row[field] = val
 
-    df = pd.DataFrame([row])
+    df = pd.DataFrame([row], columns=feature_order)
 
-    for col in df.select_dtypes(include=["object"]).columns:
-        df[col] = df[col].astype(str)
+    for col in categorical_cols:
+        if col in df.columns:
+            df[col] = df[col].astype("category")
 
-    X = preprocessor.transform(df)
-    y_pred = model.predict(X)
-
+    y_pred = model.predict(df)
     return PredictionResponse(
         predicted_price=float(y_pred[0]),
         currency="PLN",
@@ -76,5 +83,6 @@ def health():
     return {
         "status": "ok",
         "model_loaded": model is not None,
-        "features": feature_names,
+        "feature_order": feature_order,
+        "categorical_cols": categorical_cols,
     }

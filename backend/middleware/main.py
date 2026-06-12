@@ -1,6 +1,7 @@
 import json
 import httpx
 from datetime import datetime
+from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
@@ -70,6 +71,7 @@ def compute_derived_features(data: FormData) -> dict:
         if data.Displacement_cm3 > 0
         else 0.0
     )
+    age_x_mileage = car_age * data.Mileage_km
 
     return {
         "Condition": data.Condition,
@@ -87,6 +89,7 @@ def compute_derived_features(data: FormData) -> dict:
         "car_age": float(car_age),
         "mileage_per_year": mileage_per_year,
         "power_to_displacement": power_to_displacement,
+        "age_x_mileage": age_x_mileage,
     }
 
 

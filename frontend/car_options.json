@@ -5011,8 +5011,6 @@
     "Benzyna": "Gasoline",
     "Diesel": "Diesel",
     "Benzyna + LPG": "Gasoline + LPG",
-    "Nowy": "New",
-    "Uzywany": "Used",
     "Bezowy": "beige",
     "Czarny": "black",
     "Niebieski": "blue",
@@ -5026,6 +5024,8 @@
     "Srebrny": "silver",
     "Fioletowy": "violet",
     "Bialy": "white",
-    "Zolty": "yellow"
+    "Zolty": "yellow",
+    "Nowy": "New",
+    "Uzywany": "Used"
   }
 }

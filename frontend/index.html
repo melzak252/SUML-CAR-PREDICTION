@@ -267,8 +267,6 @@
           <label for="Condition">Stan *</label>
           <select id="Condition" required>
             <option value="">Uzywany czy nowy?</option>
-            <option value="Used">Uzywany</option>
-            <option value="New">Nowy</option>
           </select>
           <div class="error-msg" id="err_Condition"></div>
         </div>
@@ -310,7 +308,7 @@
     function populateSelect(id, items, placeholder) {
       const sel = $(id);
       const current = sel.value;
-      sel.innerHTML = `<option value="">${placeholder}</option>`;
+      sel.innerHTML = '<option value="">' + placeholder + '</option>';
       items.forEach(item => {
         const opt = document.createElement('option');
         opt.value = item;
@@ -322,7 +320,7 @@
 
     async function loadOptions() {
       try {
-        const res = await fetch(`${API}/car-options`);
+        const res = await fetch(API + '/car-options');
         optionsData = await res.json();
 
         const brands = Object.keys(optionsData.hierarchy).sort();
@@ -336,6 +334,10 @@
         const doorsOpts = optionsData.doors_numbers.map(String);
         populateSelect('Doors_number', doorsOpts, 'Wybierz');
 
+        const conditionsRaw = optionsData.conditions;
+        const l2r = optionsData.labels_to_raw || {};
+        populateSelect('Condition', conditionsRaw, 'Uzywany czy nowy?');
+
         const yearSel = $('Production_year');
         yearSel.innerHTML = '<option value="">Wybierz rok</option>';
         for (let y = 2026; y >= 1990; y--) {
@@ -347,6 +349,13 @@
       } catch (e) {
         console.error('Nie udalo sie zaladowac opcji:', e);
       }
+    }
+
+    function getRaw(label) {
+      if (optionsData && optionsData.labels_to_raw) {
+        return optionsData.labels_to_raw[label] || label;
+      }
+      return label;
     }
 
     function updateModels() {
@@ -464,15 +473,15 @@
         Transmission: $('Transmission').value,
         Vehicle_model: $('Vehicle_model').value,
         Vehicle_brand: $('Vehicle_brand').value,
-        Type: $('Type').value,
-        Drive: $('Drive').value,
-        Colour: $('Colour').value,
-        Fuel_type: $('Fuel_type').value,
-        Condition: $('Condition').value,
+        Type: getRaw($('Type').value),
+        Drive: getRaw($('Drive').value),
+        Colour: getRaw($('Colour').value),
+        Fuel_type: getRaw($('Fuel_type').value),
+        Condition: getRaw($('Condition').value),
       };
 
       try {
-        const res = await fetch(`${API}/predict`, {
+        const res = await fetch(API + '/predict', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
