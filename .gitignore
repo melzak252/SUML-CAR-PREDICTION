@@ -16,13 +16,14 @@ env/
 
 # Local data and generated artifacts
 outputs/
-models/*
+# models/*
 !models/car_price_xgboost_price_target/
 models/car_price_xgboost_price_target/*
 !models/car_price_xgboost_price_target/model_pipeline_app.pkl
 !models/car_price_xgboost_price_target/input_schema.json
-data/
+data/*.csv
 test/
+TEST/
 
 # Environment and secrets
 .env

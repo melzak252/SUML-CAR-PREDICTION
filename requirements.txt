@@ -1,5 +1,3 @@
-kedro
-kaggle
 pandas
 scikit-learn
 notebook
@@ -7,7 +5,6 @@ seaborn
 joblib
 fastapi
 uvicorn
-autogluon
-streamlit
 xgboost
 httpx
+streamlit
