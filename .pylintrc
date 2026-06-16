@@ -1,0 +1,9 @@
+[MAIN]
+ignore-patterns=scripts[\\/]windows[\\/]get-pip\.py
+
+[MESSAGES CONTROL]
+disable=
+    import-error,
+    no-self-argument,
+    too-few-public-methods,
+    broad-exception-caught

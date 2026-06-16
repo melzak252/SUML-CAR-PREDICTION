@@ -93,7 +93,7 @@ powershell -ExecutionPolicy Bypass -Command ^
     "$c=$c | ForEach-Object { $_ -replace '^#?\s*import site','import site' };" ^
     "if($c -notcontains 'Lib\site-packages'){$c+='Lib\site-packages'};" ^
     "Set-Content $pth.FullName -Value $c;" ^
-    "& \"$p\python.exe\" 'backend\tools\get-pip.py' 2>$null | Out-Null;" ^
+    "& \"$p\python.exe\" 'scripts\windows\get-pip.py' 2>$null | Out-Null;" ^
     "& \"$p\python.exe\" -m pip install virtualenv 2>$null | Out-Null"
 
 :pip_ok
