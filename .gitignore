@@ -17,13 +17,6 @@ env/
 # Local data and generated artifacts
 outputs/
 data/*.csv
-test/
-TEST/
-
-# Deployment temporaries
-scripts/windows/git/
-scripts/windows/python310/
-scripts/linux/python3/
 
 # Environment and secrets
 .env
